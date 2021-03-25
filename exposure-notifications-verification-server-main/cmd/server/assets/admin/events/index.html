@@ -1,0 +1,111 @@
+{{define "admin/events/index"}}
+
+{{$realm := .realm}}
+{{$events := .events}}
+
+<!doctype html>
+<html lang="en">
+<head>
+  {{template "head" .}}
+</head>
+
+<body id="admin-events-index" class="tab-content">
+  {{template "admin/navbar" .}}
+
+  <main role="main" class="container">
+    {{template "flash" .}}
+
+    <h1>System event log</h1>
+    <p>
+      The list below shows the past 30 days of events that have occurred across all realms.
+      Not all events are recorded for auditing to preserve privacy.
+    </p>
+
+    <div class="card mb-3 shadow-sm">
+      <div class="card-header">Events
+      {{if .realm}}
+      <span class="badge badge-secondary">{{.realm.Name}}
+        <a class="" href="/admin/events?from={{.from}}&to={{.to}}">
+          <span class="oi oi-circle-x ml-1 text-light" aria-hidden="true"></span>
+        </a>
+      </span>
+      {{end}}
+      </div>
+
+      <div class="card-body">
+        <form method="GET" id="search-form">
+          <!-- There's a hidden query param to filter on test `include_test=true` -->
+          <div class="input-group">
+            <span class="input-group-prepend">
+              <select name="realm_id" class="text-truncate custom-select dropdown-toggle border-right-0" style="border-radius:0.25rem 0 0 0.25rem;">
+                <option value="" {{selectedIf (not .realm)}}>All events</option>
+                <option value="0" {{if .realm}}{{selectedIf (eq .realm.ID 0)}}{{end}}>System events</option>
+                {{if .realm}}{{if ne .realm.ID 0}}
+                <option value="{{.realm.ID}}" {{if .realm}}{{selectedIf (ne .realm.ID 0)}}{{end}}>
+                  {{.realm.Name}} events
+                </option>
+                {{end}}{{end}}
+              </select>
+            </span>
+            <input type="datetime-local" id="from" name="from" value="{{.from}}" class="form-control">
+            <span class="input-group-append">
+              <span class="input-group-text bg-transparent border-left-0 border-right-0">thru</span>
+            </span>
+            <input type="datetime-local" id="to" name="to" value="{{.to}}" class="form-control">
+            <div class="input-group-append">
+              <button type="submit" class="btn btn-primary">
+                <span class="oi oi-magnifying-glass" aria-hidden="true"></span>
+                <span class="sr-only">Search</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      {{if $events}}
+        <div class="list-group list-group-flush" id="results">
+          {{range $event := $events}}
+            <div class="list-group-item flex-column align-items-start" id="event">
+              <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">{{$event.Action}}</h5>
+                <small data-timestamp="{{$event.CreatedAt.Format "1/02/2006 3:04:05 PM UTC"}}">
+                  {{$event.CreatedAt.Format "2006-02-01 15:04"}}
+                </small>
+              </div>
+              <div>
+                <span class="text-primary text-nowrap text-truncate">{{$event.ActorDisplay}}</span>
+
+                <span>{{$event.Action}}</span>
+
+                <span class="text-primary text-nowrap text-truncate">
+                  {{$event.TargetDisplay}}
+                  {{if $event.RealmID}}
+                    on realm {{$event.RealmID}}
+                  {{end}}
+                </span>
+
+                {{if $event.Diff}}
+                <br>
+                  <a href="#" data-toggle="collapse" data-target="#collapseDiff{{$event.ID}}"
+                    aria-expanded="true" aria-controls="collapseDiff{{$event.ID}}"
+                    class="small text-muted">
+                    Toggle diff
+                  </a>
+                  <pre id="collapseDiff{{$event.ID}}" class="collapse mt-3 mb-1"><code>{{$event.Diff}}</code></pre>
+                {{end}}
+              </div>
+            </div>
+          {{end}}
+        </div>
+      {{else}}
+        <p class="card-body text-center mb-0">
+          <em>There are no events{{if (or .from .to)}} that match the query{{end}}.</em>
+        </p>
+      {{end}}
+    </div>
+
+    {{template "shared/pagination" .}}
+  </main>
+</body>
+</html>
+{{end}}

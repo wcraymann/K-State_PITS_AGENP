@@ -1,0 +1,120 @@
+{{define "apikeys/index"}}
+
+{{$authApp := .authApp}}
+
+{{$currentMembership := .currentMembership}}
+{{$canWrite := $currentMembership.Can rbac.APIKeyWrite}}
+
+<!doctype html>
+<html lang="en">
+<head>
+  {{template "head" .}}
+</head>
+
+<body id="apikeys-index" class="tab-content">
+  {{template "navbar" .}}
+
+  <main role="main" class="container">
+    {{template "flash" .}}
+
+    <div class="card shadow-sm mt-4 mb-3">
+      <div class="card-header">
+        <span class="oi oi-key mr-2 ml-n1" aria-hidden="true"></span>
+        API keys
+        {{if $canWrite}}
+          <a href="/realm/apikeys/new" class="float-right mr-n1 text-secondary" data-toggle="tooltip" title="New API key">
+            <span class="oi oi-plus small" aria-hidden="true"></span>
+          </a>
+        {{end}}
+      </div>
+
+      <div class="card-body">
+        <form method="GET" action="/realm/apikeys" id="search-form">
+          <div class="input-group">
+            <input type="search" name="q" id="search" value="{{.query}}" placeholder="Search..."
+              autocomplete="off" class="form-control" />
+            <div class="input-group-append">
+              <button type="submit" class="btn btn-primary">
+                <span class="oi oi-magnifying-glass" aria-hidden="true"></span>
+                <span class="sr-only">Search</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      {{if .apps}}
+        <table class="table table-bordered table-striped table-fixed table-inner-border-only border-top mb-0">
+          <thead>
+            <tr>
+              <th scope="col" width="40"></th>
+              <th scope="col">App</th>
+              <th scope="col" width="90">Key</th>
+              <th scope="col" width="90">Type</th>
+              {{if $canWrite}}
+                <th scope="col" width="40"></th>
+              {{end}}
+            </tr>
+          </thead>
+          <tbody>
+          {{range .apps}}
+            <tr id="apikey-{{.ID}}">
+              <td class="text-center">
+                {{if .DeletedAt}}
+                  <span class="oi oi-circle-x text-danger"
+                    data-toggle="tooltip" title="API key is disabled - it will be deleted in a few days"></span>
+                {{else}}
+                  <span class="oi oi-circle-check text-success"
+                    data-toggle="tooltip" title="API key is enabled"></span>
+                {{end}}
+              </td>
+              <td class="text-truncate">
+                <a href="/realm/apikeys/{{.ID}}">{{.Name}}</a>
+              </td>
+              <td class="text-center text-monospace">
+                {{.APIKeyPreview}}
+              </td>
+              <td class="text-center">
+                {{if .IsAdminType}}<span class="badge badge-pill badge-primary" data-toggle="tooltip" title="For issuing verification codes">Admin</span>{{end}}
+                {{if .IsDeviceType}}<span class="badge badge-pill badge-secondary" data-toggle="tooltip" title="For use in mobile apps to verify codes and get certificates">Device</span>{{end}}
+                {{if .IsStatsType}}<span class="badge badge-pill badge-secondary" data-toggle="tooltip" title="For retrieving realm statistics">Stats</span>{{end}}
+              </td>
+              {{if $canWrite}}
+                <td class="text-center">
+                  {{if .DeletedAt}}
+                  <a href="/realm/apikeys/{{.ID}}/enable" id="enable-apikey-{{.ID}}"
+                    class="d-block text-danger"
+                    data-method="patch"
+                    data-confirm="Are you sure you want to restore '{{.Name}}'?"
+                    data-toggle="tooltip"
+                    title="Restore this API key">
+                    <span class="oi oi-loop-circular" aria-hidden="true"></span>
+                  </a>
+                  {{else}}
+                  <a href="/realm/apikeys/{{.ID}}/disable" id="disable-apikey-{{.ID}}"
+                    class="d-block text-danger"
+                    data-method="patch"
+                    data-confirm="Are you sure you want to disable '{{.Name}}'?"
+                    data-toggle="tooltip"
+                    title="Disable this API key">
+                    <span class="oi oi-trash" aria-hidden="true"></span>
+                  </a>
+                  {{end}}
+                </td>
+              {{end}}
+            </tr>
+          {{end}}
+          </tbody>
+        </table>
+      {{else}}
+        <p class="card-body text-center mb-0">
+          <em>There are no API keys{{if .query}} that match the query{{end}}.</em>
+        </p>
+      {{end}}
+    </div>
+
+    {{template "shared/pagination" .}}
+  </main>
+</body>
+</html>
+{{end}}

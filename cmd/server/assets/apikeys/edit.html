@@ -1,0 +1,68 @@
+{{define "apikeys/edit"}}
+
+{{$authApp := .authApp}}
+
+<!doctype html>
+<html lang="en">
+<head>
+  {{template "head" .}}
+</head>
+
+<body id="apikeys-edit" class="tab-content">
+  {{template "navbar" .}}
+
+  <main role="main" class="container">
+    {{template "flash" .}}
+
+    <h1>Edit API key</h1>
+    <p>
+      Use the form below to edit the API key.
+    </p>
+
+    <div class="card mb-3 shadow-sm">
+      <div class="card-header">Details</div>
+      <div class="card-body">
+        {{template "errorSummary" $authApp}}
+
+        <form method="POST" action="/realm/apikeys/{{$authApp.ID}}">
+          <input type="hidden" name="_method" value="PATCH">
+          {{ .csrfField }}
+
+          <div class="form-label-group">
+            <input type="text" id="name" name="name" class="form-control{{if $authApp.ErrorsFor "name"}} is-invalid{{end}}" value="{{$authApp.Name}}" placeholder="Application name" autofocus>
+            <label for="name">Application name</label>
+            {{if $authApp.ErrorsFor "name"}}
+            <div class="invalid-feedback">
+              {{joinStrings ($authApp.ErrorsFor "name") ", "}}
+            </div>
+            {{end}}
+          </div>
+
+          <div class="form-group">
+            <select class="form-control" name="type" id="type" disabled>
+              <option selected>
+                {{if (eq $authApp.APIKeyType 0)}}
+                  Device (can verify codes)
+                {{else if (eq $authApp.APIKeyType 1)}}
+                  Admin (can issue codes)
+                {{else}}
+                  Unknown
+                {{end}}
+              </option>
+            </select>
+          </div>
+
+          <button type="submit" id="submit" class="btn btn-primary btn-block">Update API key</button>
+        </form>
+      </div>
+    </div>
+
+    <div>
+      <p>
+        <a href="/realm/apikeys">&larr; Back to all API keys</a>
+      </p>
+    </div>
+  </main>
+</body>
+</html>
+{{end}}

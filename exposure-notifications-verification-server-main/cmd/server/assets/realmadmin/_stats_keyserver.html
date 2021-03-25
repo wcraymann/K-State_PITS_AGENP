@@ -1,0 +1,619 @@
+{{define "realmadmin/_stats_keyserver"}}
+
+<h1>Key server stats</h1>
+<p>
+  The data below shows realm statistics and visualizations gathered from the key server.
+</p>
+
+{{if .keyServerOverride}}<p>Stats sourced from: "{{.keyServerOverride}}}</p>{{end}}
+
+<div class="card shadow-sm mb-3">
+  <div class="card-header">
+    <span class="oi oi-bar-chart mr-2 ml-n1"></span>
+    TEK publish metrics
+  </div>
+  <div id="keyserver_chart_div" class="h-100 w-100" style="min-height:325px;">
+    <p class="text-center font-italic w-100 mt-5">Loading chart...</p>
+  </div>
+  <small class="card-footer d-flex justify-content-between text-muted">
+    <a href="#" data-toggle="modal" data-target="#keyserver-stats-modal">Learn more about this chart</a>
+    <span>
+      <span class="mr-1">Export as:</span>
+      <a href="/stats/realm/key-server.csv" class="mr-1">CSV</a>
+      <a href="/stats/realm/key-server.json" target="_blank">JSON</a>
+    </span>
+  </small>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-header">
+    <span class="oi oi-bar-chart mr-2 ml-n1"></span>
+    Total publish requests (by device operating system)
+  </div>
+  <div id="keyserver_os_chart_div" class="h-100 w-100" style="min-height:325px;">
+    <p class="text-center font-italic w-100 mt-5">Loading chart...</p>
+  </div>
+  <small class="card-footer d-flex justify-content-between text-muted">
+    <a href="#" data-toggle="modal" data-target="#publish-by-os-modal">Learn more about this chart</a>
+    <span>
+      <span class="mr-1">Export as:</span>
+      <a href="/stats/realm/key-server.csv" class="mr-1">CSV</a>
+      <a href="/stats/realm/key-server.json" target="_blank">JSON</a>
+    </span>
+  </small>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-header">
+    <span class="oi oi-bar-chart mr-2 ml-n1"></span>
+    EN days active before upload <span class="sum-title">(7 day sum)</span>
+  </div>
+  <div id="keyserver_tek_chart_div" class="h-100 w-100" style="min-height:325px;">
+    <p class="text-center font-italic w-100 mt-5">Loading chart...</p>
+  </div>
+  <div class="slidecontainer pl-5 pr-5">
+    <input type="range" class="slider w-100" id="tek_slider" list="tek_slide_ticks">
+    <datalist id="tek_slide_ticks"></datalist>
+  </div>
+  <small class="card-footer d-flex justify-content-between text-muted">
+    <a href="#" data-toggle="modal" data-target="#tek-age-modal">Learn more about this chart</a>
+    <span>
+      <span class="mr-1">Export as:</span>
+      <a href="/stats/realm/key-server.csv" class="mr-1">CSV</a>
+      <a href="/stats/realm/key-server.json" target="_blank">JSON</a>
+    </span>
+  </small>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-header">
+    <span class="oi oi-bar-chart mr-2 ml-n1"></span>
+    Onset-to-upload distribution <span class="sum-title">(7 day sum)</span>
+  </div>
+  <div id="keyserver_onset_chart_div" class="h-100 w-100" style="min-height:325px;">
+    <p class="text-center font-italic w-100 mt-5">Loading chart...</p>
+  </div>
+  <div class="slidecontainer pl-5 pr-5">
+    <input type="range" class="slider w-100" id="onset_slider" list="onset_slide_ticks"/>
+    <datalist id="onset_slide_ticks"></datalist>
+  </div>
+  <small class="card-footer d-flex justify-content-between text-muted">
+    <a href="#" data-toggle="modal" data-target="#onset-to-upload-modal">Learn more about this chart</a>
+    <span>
+      <span class="mr-1">Export as:</span>
+      <a href="/stats/realm/key-server.csv" class="mr-1">CSV</a>
+      <a href="/stats/realm/key-server.json" target="_blank">JSON</a>
+    </span>
+  </small>
+</div>
+
+<div class="modal fade" id="keyserver-stats-modal" data-backdrop="static" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">TEK publish metrics</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mb-n3">
+        <p>
+          This graph reflects data from the key-server for this realm,
+          grouped by UTC day.
+        </p>
+
+        <strong>Total # TEKs published</strong>
+        <p>
+          This line tracks the total number of TEKs published to the key-server.
+          This is expected to be similar to the number of tokens claimed on the verification server.
+        </p>
+
+        <strong>Requests with revisions</strong>
+        <p>
+          This line tracks the total number of publish requests that contained
+          at least one TEK revision
+        </p>
+
+        <strong>Request missing onset</strong>
+        <p>
+          This line tracks the total number of publish requests where no onset date
+          was provided. These request are not included in the onset to upload distribution.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="publish-by-os-modal" data-backdrop="static" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Publish requests (by device operating system)</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mb-n3">
+        <p>
+          This graph shows counts of the number of publish requests broken down by the request operating system.
+          Hover over columns to see the percentage for each OS segment.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="tek-age-modal" data-backdrop="static" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">EN days active before upload</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mb-n3">
+        <p>
+          This graph shows a distribution of the ages of temporary exposure keys by how many days old each TEK is.
+          Move the slider to see how the distribution has changed over time.
+
+          Each bar shows the number of keys that are less than N days old and greater than the previous bar.
+          Eg. "4" shows keys between 3 and 4 days old.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="onset-to-upload-modal" data-backdrop="static" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Onset-to-upload distribution</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mb-n3">
+        <p>
+          This graph reflects the distribution of the time between the TEK's symptom onset time and when the key was uploaded.
+          Move the slider to see how the distribution has changed over time.
+
+          Each bar shows the number of keys whose symptom onset-to-upload is less than N days old but greater than the previous bar.
+          Eg. "4" shows symptom-onset between 3 and 4 days old.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script type="text/javascript">
+  let stats;
+
+  google.charts.load('current', {
+    packages: ['corechart'],
+    callback: drawRealmCharts,
+  });
+
+  function drawRealmCharts() {
+    $.ajax({
+      url: '/stats/realm/key-server.json',
+      dataType: 'json',
+    })
+    .done(function(data, status, xhr) {
+      $slider.attr('min', Math.min(smoothing, data.length));
+      $slider.attr('max', data.length);
+      $slider.attr('value',data.length);
+      $slider.attr('step', 1);
+      $slider.val(data.length);
+      $onsetSlider.attr('min', Math.min(smoothing, data.length));
+      $onsetSlider.attr('max', data.length);
+      $onsetSlider.attr('value',data.length);
+      $onsetSlider.attr('step', 1);
+      $onsetSlider.val(data.length);
+
+      let $tekTicks = $("#tek_slide_ticks");
+      $tekTicks.empty();
+      for (i = Math.min(smoothing, data.length); i < data.length; i++) {
+        let $opt = $('<option/>');
+        $opt.val(i);
+        $opt.attr('label', data[i].day.substring(0,10));
+        $tekTicks.append($opt);
+      }
+
+      let $onsetTicks = $("#onset_slide_ticks");
+      $onsetTicks.empty();
+      for (i = 0; i < data.length; i++) {
+        let $opt = $('<option/>');
+        $opt.val(i);
+        $onsetTicks.append($opt);
+      }
+
+      drawStatsChart(data);
+      drawOSChart(data);
+      drawTEKAgeChart(data);
+      drawOnsetToUploadChart(data);
+    })
+    .fail(function(xhr, status, err) {
+      flash.error('Failed to render key-server stats: ' + err);
+    });
+  }
+
+  function drawStatsChart(data) {
+    let $div = $('#keyserver_chart_div');
+
+    if (!data.length) {
+      $div.find('p').text('No data yet.');
+      return;
+    }
+    stats = data;
+
+    let dataTable = new google.visualization.DataTable();
+    dataTable.addColumn('date', 'Date');
+    dataTable.addColumn('number', 'Total # TEKs published');
+    dataTable.addColumn('number', 'Revision requests');
+    dataTable.addColumn('number', 'Requests missing onset');
+
+    stats.reverse().forEach(function(row) {
+      dataTable.addRow([utcDate(row.day),
+        row.total_teks_published,
+        row.requests_with_revisions,
+        row.requests_missing_onset_date,
+      ]);
+    });
+
+    let dateFormatter = new google.visualization.DateFormat({
+      pattern: 'MMM dd',
+    });
+    dateFormatter.format(dataTable, 0);
+
+    let options = {
+      colors: ['#28a745', '#a76e28', '#a72898'],
+      chartArea: {
+        left: 60,
+        right: 40,
+        bottom: 40,
+        top: 40,
+        width: '100%',
+        height: '300',
+      },
+      hAxis: { format: 'M/d' },
+      legend: { position: 'top' },
+    };
+
+    let chart = new google.visualization.LineChart($div.get(0));
+    chart.draw(dataTable, options);
+    chartData.push({
+      chart: chart,
+      data: dataTable,
+      options: options,
+    });
+  }
+
+
+  function drawOSChart(data) {
+    let $div = $('#keyserver_os_chart_div');
+
+    if (!data.length) {
+      $div.find('p').text('No data yet.');
+      return;
+    }
+    stats = data;
+
+    let dataTable = new google.visualization.DataTable();
+    dataTable.addColumn('date', 'Date');
+    dataTable.addColumn('number', 'Unknown OS');
+    dataTable.addColumn({type:'string', role:'tooltip', p: {html: true}})
+    dataTable.addColumn('number', 'Android');
+    dataTable.addColumn({type:'string', role:'tooltip', p: {html: true}})
+    dataTable.addColumn('number', 'IOS');
+    dataTable.addColumn({type:'string', role:'tooltip', p: {html: true}})
+
+    stats.reverse().forEach(function(row) {
+      let total = row.publish_requests.unknown + row.publish_requests.android + row.publish_requests.ios;
+      let unknownCount = parseInt(row.publish_requests.unknown);
+      let androidCount = parseInt(row.publish_requests.android);
+      let iosCount = parseInt(row.publish_requests.ios);
+
+      dataTable.addRow([utcDate(row.day),
+        row.publish_requests.unknown,
+        "<ul class='chart-tooltip'><li><strong>Unknown:</strong></li>"+
+          "<li>Count: " + unknownCount + "</li>" +
+          "<li>Percent: " + (unknownCount / total * 100).toPrecision(3) + "%</li></ul>",
+        row.publish_requests.android,
+        "<ul class='chart-tooltip'><li><strong>Android:</strong></li>"+
+          "<li>Count: " + androidCount  + "</li>" +
+          "<li>Percent: " + (androidCount  / total * 100).toPrecision(3)  + "%</li></ul>",
+        row.publish_requests.ios,
+        "<ul class='chart-tooltip'><li><strong>IOS:</strong></li>"+
+          "<li>Count: " + iosCount + "</li>" +
+          "<li>Percent: " + (iosCount / total * 100).toPrecision(3)  + "%</li></ul>",
+      ]);
+    });
+
+    let dateFormatter = new google.visualization.DateFormat({
+      pattern: 'MMM dd',
+    });
+    dateFormatter.format(dataTable, 0);
+
+    let options = {
+      colors: ['#6c757d', '#28a745', '#007bff'],
+      chartArea: {
+        left: 60,
+        right: 40,
+        bottom: 40,
+        top: 40,
+        width: '100%',
+        height: '300',
+      },
+      hAxis: {
+        format: 'M/d',
+        gridlines: { color: 'transparent' },
+      },
+      legend: { position: 'top' },
+      isStacked: true,
+      tooltip: {isHtml: true},
+    };
+
+    let chart = new google.visualization.ColumnChart($div.get(0));
+    chart.draw(dataTable, options);
+    chartData.push({
+      chart: chart,
+      data: dataTable,
+      options: options,
+    });
+  }
+
+  let tekChart;
+  let tekOptions;
+  let tekData;
+  let maxVAxisTEKAge;
+  function drawTEKAgeChart(data) {
+    let $div = $('#keyserver_tek_chart_div');
+    maxVAxisTEKAge = 1;
+
+    if (!data.length) {
+      $div.find('p').text('No data yet.');
+      return;
+    }
+    stats = data;
+
+    for (i = 0; i < stats.length - smoothing; i++) {
+      getTEKDataTable(i);
+    }
+
+    tekOptions = {
+      colors: ['#329262'],
+      chartArea: {
+        left: 60,
+        right: 40,
+        bottom: 40,
+        top: 40,
+        width: '100%',
+        height: '300',
+      },
+      animation:{
+        startup: false,
+        duration: 500,
+        easing: 'inAndOut',
+      },
+      legend: { position: 'none' },
+      hAxis: {
+        title: 'TEK days old',
+        gridlines: { color: 'transparent' },
+        ticks: [{v:1, f:'<1'},2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+        showTextEvery: 1,
+      },
+      vAxis: {
+        minValue: 0,
+        maxValue: maxVAxisTEKAge,
+      },
+      titlePosition: "out",
+      title: `${smoothing} days from ` + stats[0].day.split("T")[0],
+      tooltip: {isHtml: true},
+    };
+
+    tekChart = new google.visualization.ColumnChart($div.get(0));
+    tekData = getTEKDataTable(0);
+    tekChart.draw(tekData, tekOptions);
+    chartData.push({
+      chart: tekChart,
+      data: tekData,
+      options: tekOptions,
+    });
+  }
+
+  let dataTableCache = new Map()
+  function getTEKDataTable(dateIndex) {
+    let key = "s" + smoothing + "i" + dateIndex;
+    if (dataTableCache.has(key)) {
+      return dataTableCache.get(key);
+    }
+
+    let dataTable = new google.visualization.DataTable();
+    dataTable.addColumn('number', 'days');
+    dataTable.addColumn('number', 'count');
+    dataTable.addColumn({type:'string', role:'style'});
+    dataTable.addColumn({type:'string', role:'annotation'});
+    dataTable.addColumn({type:'string', role:'tooltip', p: {html: true}});
+
+    // sum over last ${smoothing} days
+    let table = new Array(stats[dateIndex].tek_age_distribution.length).fill(0);
+    let i;
+    let total = 0;
+    for (i = dateIndex; i < dateIndex + smoothing && i < stats.length; i++) {
+      let row = stats[i];
+      let j;
+      for (j = 0; j < row.tek_age_distribution.length; j++) {
+        let count = parseInt(row.tek_age_distribution[j]);
+        table[j] += count;
+        total += count;
+      }
+    }
+
+    for (i = 0; i < table.length; i++) {
+      if (table[i] > maxVAxisTEKAge) {
+        maxVAxisTEKAge = table[i];
+      }
+
+      let r = [i+1, table[i],"","",""]
+      if (i == 15) {
+        r[2] = "#6c757d";
+        r[3] = ">15 days";
+      }
+
+      r[4] =
+        "<ul class='chart-tooltip'><li><strong>Days:</strong> "+ r[0] +"</li>"+
+          "<li>Count: " + r[1] + "</li>" +
+          "<li>Percent: " + (r[1] / total * 100).toPrecision(3) + "%</li></ul>";
+
+
+      dataTable.addRow(r);
+    }
+    dataTableCache.set(key, dataTable);
+    return dataTable;
+  }
+
+
+  let onsetChart;
+  let onsetOptions;
+  let onsetData;
+  let onsetVAxisMax;
+  function drawOnsetToUploadChart(data) {
+    let $div = $('#keyserver_onset_chart_div');
+    onsetVAxisMax = 1;
+
+    if (!data.length) {
+      $div.find('p').text('No data yet.');
+      return;
+    }
+    stats = data;
+
+    // calculate the vaxis max.
+    for (i = 0; i < stats.length - smoothing; i++) {
+      getOnsetDataTable(i);
+    }
+
+    onsetOptions = {
+      colors: ['#316395'],
+      chartArea: {
+        left: 60,
+        right: 40,
+        bottom: 40,
+        top: 40,
+        width: '100%',
+        height: '300',
+      },
+      legend: { position: 'none' },
+      hAxis: {
+        title: 'Days from onset to upload',
+        gridlines: { color: 'transparent' },
+        ticks: [{v:1, f:'<1'},2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30],
+        showTextEvery: 1,
+      },
+      vAxis: {
+        minValue: 0,
+        maxValue: onsetVAxisMax,
+      },
+      titlePosition: "out",
+      title: `${smoothing} days from ` + stats[0].day.split("T")[0],
+      tooltip: {isHtml: true},
+    };
+
+    onsetChart = new google.visualization.ColumnChart($div.get(0));
+    onsetData = getOnsetDataTable(0);
+    onsetChart.draw(onsetData, onsetOptions);
+    chartData.push({
+      chart: onsetChart,
+      data: onsetData,
+      options: onsetOptions,
+    });
+  }
+
+  let onsetCache = new Map();
+  function getOnsetDataTable(dateIndex) {
+    let key = "s" + smoothing + "i" + dateIndex;
+    if (onsetCache.has(key)) {
+      return onsetCache.get(key);
+    }
+
+    let dataTable = new google.visualization.DataTable();
+    dataTable.addColumn('number', 'days');
+    dataTable.addColumn('number', 'count');
+    dataTable.addColumn({type:'string', role:'style'});
+    dataTable.addColumn({type:'string', role:'annotation'});
+    dataTable.addColumn({type:'string', role:'tooltip', p: {html: true}});
+
+    // sum over last ${smoothing} days
+    let table = new Array(stats[dateIndex].onset_to_upload_distribution.length).fill(0);
+    let i;
+    let total = 0;
+    for (i = dateIndex; i < dateIndex + smoothing && i < stats.length; i++) {
+      let row = stats[i];
+      let j;
+      for (j = 0; j < row.onset_to_upload_distribution.length; j++) {
+        let count = parseInt(row.onset_to_upload_distribution[j]);
+        table[j] += count;
+        total += count;
+      }
+    }
+
+    for (i = 0; i < table.length; i++) {
+      let r = [i+1, table[i],"","", ""]
+      if (i == 30) {
+        r[2] = "#6c757d";
+        r[3] = ">30 days";
+      }
+
+      r[4] =
+        "<ul class='chart-tooltip'><li><strong>Days:</strong> "+ r[0] +"</li>"+
+          "<li>Count: " + r[1] + "</li>" +
+          "<li>Percent: " + (r[1] / total * 100).toPrecision(3) + "%</li></ul>";
+
+
+      dataTable.addRow(r);
+      if (table[i] > onsetVAxisMax) {
+        onsetVAxisMax = table[i];
+      }
+    }
+    onsetCache.set(key, dataTable);
+    return dataTable;
+  }
+
+  $(function() {
+    $slider.on("input", function(event) {
+      if (!stats) {
+        return
+      }
+      let indx = stats.length - $slider.val();
+      tekOptions.title = `${smoothing} days from ` + stats[indx].day.split("T")[0];
+      tekOptions.animation = {
+        startup: false,
+        duration: 500,
+        easing: 'inAndOut',
+      };
+      tekData = getTEKDataTable(indx);
+
+      tekChart.draw(tekData, tekOptions);
+    });
+
+    $onsetSlider.on("input", function(event) {
+      if (!stats) {
+        return
+      }
+      let indx = stats.length - $onsetSlider.val();
+      onsetOptions.title = `${smoothing} days from ` + stats[indx].day.split("T")[0];
+      onsetOptions.animation = {
+        startup: false,
+        duration: 500,
+        easing: 'inAndOut',
+      };
+
+      onsetData = getOnsetDataTable(indx);
+      onsetChart.draw(onsetData, onsetOptions);
+    });
+  });
+</script>
+
+{{end}}

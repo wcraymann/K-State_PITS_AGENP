@@ -1,0 +1,107 @@
+{{define "admin/users/index"}}
+
+{{$currentUser := .currentUser}}
+{{$users := .users}}
+
+<!doctype html>
+<html lang="en">
+<head>
+  {{template "head" .}}
+</head>
+
+<body id="admin-users-index" class="tab-content">
+  {{template "admin/navbar" .}}
+
+  <main role="main" class="container">
+    {{template "flash" .}}
+
+    <div class="card mb-3 shadow-sm">
+      <div class="card-header">
+        <span class="oi oi-person mr-2 ml-n1" aria-hidden="true"></span>
+        Users
+        <a href="/admin/users/new" class="float-right mr-n1 text-secondary" id="new" data-toggle="tooltip" title="New system admin">
+          <span class="oi oi-plus small" aria-hidden="true"></span>
+        </a>
+      </div>
+
+      <div class="card-body">
+        <form method="GET" action="/admin/users" id="search-form">
+          <div class="input-group">
+            <span class="input-group-prepend">
+              <select name="filter" id="filter" class="text-truncate custom-select dropdown-toggle border-right-0" style="border-radius:0.25rem 0 0 0.25rem;">
+                <option value="" selected>All users</option>
+                <option value="systemAdmins" {{selectedIf (eq .filter "systemAdmins")}}>System admins</option>
+              </select>
+            </span>
+            <input type="search" name="q" id="search" value="{{.query}}" placeholder="Search..."
+              autocomplete="off" class="form-control" />
+            <div class="input-group-append">
+              <button type="submit" class="btn btn-primary">
+                <span class="oi oi-magnifying-glass" aria-hidden="true"></span>
+                <span class="sr-only">Search</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      {{if $users}}
+        <table class="table table-bordered table-striped table-fixed table-inner-border-only border-top mb-0" id="results-table">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col" width="40"></th>
+            </tr>
+          </thead>
+          <tbody>
+          {{range $users}}
+            <tr>
+              <td class="text-truncate">
+                <a href="/admin/users/{{.ID}}">{{.Name}}</a>
+                {{if .SystemAdmin}}
+                  <span class="oi oi-wrench ml-1" aria-hidden="true"
+                    data-toggle="tooltip" title="System admin"></span>
+                {{end}}
+              </td>
+              <td class="text-truncate">{{.Email}}</td>
+              <td class="text-center">
+                {{- /* cannot delete yourself */ -}}
+                {{if not (eq .ID $currentUser.ID)}}
+                {{if .SystemAdmin}}
+                <a href="/admin/users/{{.ID}}/revoke"
+                  class="d-block text-danger"
+                  data-method="DELETE"
+                  data-confirm="Are you sure you want to remove system admin privileges?"
+                  data-toggle="tooltip"
+                  title="Remove system admin privileges">
+                  <span class="oi oi-account-logout" aria-hidden="true"></span>
+                </a>
+                {{else}}
+                <a href="/admin/users/{{.ID}}"
+                  class="d-block text-danger"
+                  data-method="DELETE"
+                  data-confirm="Are you sure you want to delete this user? This will IMMEDIATELY delete the user, their account, and all access to all realms. This operation cannot be undone."
+                  data-toggle="tooltip"
+                  title="Delete this user">
+                  <span class="oi oi-trash" aria-hidden="true"></span>
+                </a>
+                {{end}}
+                {{end}}
+              </td>
+            </tr>
+          {{end}}
+          </tbody>
+        </table>
+      {{else}}
+        <p class="card-body text-center mb-0">
+          <em>There are no users{{if .query}} that match the query{{end}}.</em>
+        </p>
+      {{end}}
+    </div>
+
+    {{template "shared/pagination" .}}
+  </main>
+</body>
+</html>
+{{end}}

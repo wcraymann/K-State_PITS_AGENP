@@ -1,0 +1,54 @@
+{{define "apikeys/new"}}
+
+{{$authApp := .authApp}}
+
+<!doctype html>
+<html lang="en">
+<head>
+  {{template "head" .}}
+</head>
+
+<body id="apikeys-new" class="tab-content">
+  {{template "navbar" .}}
+
+  <main role="main" class="container">
+    {{template "flash" .}}
+
+    <h1>New API key</h1>
+    <p>
+      Use the form below to create a new API key.
+    </p>
+
+    <div class="card mb-3 shadow-sm">
+      <div class="card-header">Details</div>
+      <div class="card-body">
+        {{template "errorSummary" $authApp}}
+
+        <form method="POST" action="/realm/apikeys">
+          {{ .csrfField }}
+
+          <div class="form-label-group">
+            <input type="text" id="name" name="name" class="form-control{{if $authApp.ErrorsFor "name"}} is-invalid{{end}}" value="{{$authApp.Name}}" placeholder="Application name" autofocus>
+            <label for="name">Application name</label>
+            {{template "errorable" $authApp.ErrorsFor "name"}}
+          </div>
+
+          <div class="form-group">
+            <input type="hidden" name="type" value="-1">
+            <select class="form-control{{if $authApp.ErrorsFor "type"}} is-invalid{{end}}" name="type" id="type">
+              <option selected disabled>Select type...</option>
+              <option value="{{.typeDevice}}" {{selectedIf (eq $authApp.APIKeyType .typeDevice)}}>Device (can verify codes)</option>
+              <option value="{{.typeAdmin}}" {{selectedIf (eq $authApp.APIKeyType .typeAdmin)}}>Admin (can issue codes)</option>
+              <option value="{{.typeStats}}" {{selectedIf (eq $authApp.APIKeyType .typeStats)}}>Stats (can view statistics)</option>
+            </select>
+            {{template "errorable" $authApp.ErrorsFor "type"}}
+          </div>
+
+          <button type="submit" id="submit" class="btn btn-primary btn-block">Create API key</button>
+        </form>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
+{{end}}

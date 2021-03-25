@@ -1,0 +1,493 @@
+{{define "realmadmin/_form_sms"}}
+
+{{$realm := .realm}}
+{{$smsConfig := .smsConfig}}
+{{$smsFromNumbers := .smsFromNumbers}}
+{{$countries := .countries}}
+
+<p class="mb-4">
+  These are the settings for configuring the <a
+  href="https://www.twilio.com">Twilio</a> SMS provider. If these values are
+  blank, the system will not send SMS text message verification codes.
+</p>
+
+<form method="POST" action="/realm/settings#sms" class="floating-form">
+  {{ .csrfField }}
+  <input type="hidden" name="sms" value="1" />
+
+  {{if $realm.CanUseSystemSMSConfig}}
+    {{if $realm.UseSystemSMSConfig}}
+      <div class="alert alert-danger">
+        <strong>Warning!</strong> You are currently using the system-provided
+        SMS configuration. Specifying values below will override the system
+        configuration to use your supplied credentials.
+      </div>
+    {{end}}
+
+    <div class="form-group form-check">
+      <input type="checkbox" name="use_system_sms_config" id="use-system-sms-config" class="form-check-input" value="1" {{if $realm.UseSystemSMSConfig}} checked{{end}}
+        data-toggle="collapse" data-target=".sms-system-form">
+      <label class="form-check-label" for="use-system-sms-config">
+        Use system SMS configuration
+      </label>
+    </div>
+  {{end}}
+
+  <div class="sms-system-form collapse{{if not $realm.UseSystemSMSConfig}} show{{end}}">
+    <div class="form-label-group">
+      <input type="text" name="twilio_account_sid" id="twilio-account-sid" class="form-control text-monospace{{if $smsConfig.ErrorsFor "twilioAccountSid"}} is-invalid{{end}}"
+        placeholder="Twilio account" {{if $smsConfig.TwilioAccountSid}}value="{{$smsConfig.TwilioAccountSid}}"{{end}} />
+      <label for="twilio-account-sid">Twilio account</label>
+      {{template "errorable" $smsConfig.ErrorsFor "twilioAccountSid"}}
+      <small class="form-text text-muted">
+        This is the Twilio Account SID. Get this value from the Twilio console.
+      </small>
+    </div>
+
+    <div class="form-label-group">
+      <input type="password" name="twilio_auth_token" id="twilio-auth-token" class="form-control text-monospace{{if $smsConfig.ErrorsFor "twilioAuthToken"}} is-invalid{{end}}" autocomplete="new-password"
+        placeholder="Twilio auth token" {{if $smsConfig.TwilioAuthToken}}value="{{passwordSentinel}}"{{end}}>
+      <label for="twilio-auth-token">Twilio auth token</label>
+      {{template "errorable" $smsConfig.ErrorsFor "twilioAuthToken"}}
+      <small class="form-text text-muted">
+        This is the Twilio Auth Token. Get this value from the Twilio console.
+      </small>
+    </div>
+
+    <div class="form-label-group">
+      <input type="tel" name="twilio_from_number" id="twilio-from-number" class="form-control text-monospace
+      {{if $smsConfig.ErrorsFor "twilioFromNumber"}} is-invalid{{end}}"
+      {{if $smsConfig.TwilioFromNumber}}value="{{$smsConfig.TwilioFromNumber}}"{{end}}
+      placeholder="Twilio number" autocomplete="new-password"/>
+      <label for="twilio-from-number">Twilio number</label>
+      {{template "errorable" $smsConfig.ErrorsFor "twilioFromNumber"}}
+      <small class="form-text text-muted">
+        This is the Twilio From Number.
+        It should be either a <a href="https://www.twilio.com/docs/glossary/what-e164" target="_blank">E.164</a> formatted phone number or
+        a <a href="https://www.twilio.com/docs/messaging/services" target="_blank">Twilio Messaging Service</a> Sid.
+        Get this value from the Twilio console.
+        If you plan on sending more than 100 codes per day, we <strong>strongly
+        recommend</strong> acquiring a toll free number or SMS short code to
+        reduce the chance that your message will be flagged as spam.
+      </small>
+    </div>
+  </div>
+
+  <div class="sms-system-form collapse{{if $realm.UseSystemSMSConfig}} show{{end}}">
+    <div class="form-label-group">
+      <select name="sms_from_number_id" id="sms-from-number-id" class="form-control custom-select {{if $realm.ErrorsFor "smsFromNumber"}}is-invalid{{end}}">
+        <option selected disabled>From number</option>
+        {{range $smsFromNumber := $smsFromNumbers}}
+          <option value="{{$smsFromNumber.ID}}" {{selectedIf (eq $realm.SMSFromNumberID $smsFromNumber.ID)}}>{{$smsFromNumber.Label}} &nbsp;&bull;&nbsp; {{$smsFromNumber.Value}}</option>
+        {{end}}
+      </select>
+      {{template "errorable" $realm.ErrorsFor "smsFromNumber"}}
+      <small class="form-text text-muted">
+        <p>
+          This is the phone number from which text messages will originate.
+          Since you are using the system SMS configuration, you must choose one
+          of these numbers. To request a new number, contact your system
+          administrator.
+        </p>
+        <p>
+          <strong>Warning!</strong> These phone numbers may be changed if they
+          are reported as spam or repeatedly failing to deliver. The phone
+          number will always correspond to your region, but do not rely on this
+          exact phone number.
+        </p>
+      </small>
+    </div>
+  </div>
+
+  <div class="form-label-group">
+    <select name="sms_country" id="sms-country" class="form-control custom-select">
+      <option selected disabled>SMS country</option>
+      {{range $name, $value := $countries}}
+        <option value="{{$value}}"{{if eq $realm.SMSCountry $value}} selected{{end}}>{{$name}}</option>
+      {{end}}
+    </select>
+    {{template "errorable" $realm.ErrorsFor "smsCountry"}}
+    <small class="form-text text-muted">
+      This is the default value for the country code to use for SMS numbers.
+      Case workers will still be able to select a default value, but you should
+      set this to your most common region.
+    </small>
+  </div>
+
+  <hr>
+
+  <div>
+    <div class="btn-group dropright pb-2">
+      {{if $realm.ErrorsFor "smsTextTemplate"}}<span class="text-danger oi oi-warning"></span>{{end}}
+      <button type="button" id="sms-template-dropdown-title" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        {{(index .smsTemplates 0).Label}}
+      </button>
+      <div class="dropdown-menu" id="sms-template-menu">
+        {{range $i, $v := .smsTemplates}}
+        <a class="dropdown-item {{if eq $i 0}}active{{end}}" id="sms-template-{{$i}}" href="#">
+          {{if $realm.ErrorsFor $v.Label}}<span class="text-danger oi oi-warning"></span>{{end}}
+          {{$v.Label}}
+        </a>
+        {{end}}
+        <div id="sms-template-dropdown-divider" class="dropdown-divider"></div>
+        <a class="dropdown-item" id="sms-template-new" href="#">New SMS template</a>
+      </div>
+    </div>
+    {{if $realm.ErrorsFor "smsTextTemplate"}}
+    <div class="invalid-feedback d-block mt-n1 pb-2">
+      Errors found for one or more SMS templates
+    </div>
+    {{end}}
+
+    {{range $i, $v := .smsTemplates}}
+    <div id="sms-template-{{$i}}-div" {{if ne $i 0}}class="d-none"{{end}}>
+      <div class="form-label-group">
+        <input type="form-control text-monospace" name="sms_text_label_{{$i}}" class="form-control" value="{{$v.Label}}" placeholder="Template label" {{if eq $i 0}}readonly{{end}}/>
+        <label for="sms-text-template">Template label</label>
+      </div>
+      <div class="form-label-group">
+        <textarea name="sms_text_template_{{$i}}" class="form-control text-monospace {{if $realm.ErrorsFor $v.Label}}is-invalid{{end}} sms-text-template"
+          rows="5" placeholder="SMS text template">{{$v.Value}}</textarea>
+        <label for="sms-text-template">SMS text template</label>
+      </div>
+      {{if $realm.ErrorsFor $v.Label}}
+      <div class="invalid-feedback d-block mt-n2 mb-3">
+        {{joinStrings ($realm.ErrorsFor $v.Label) ", "}}
+      </div>
+      {{end}}
+      <button class="btn btn-danger mb-3 {{if eq $i 0}}d-none{{end}}" type="button" {{if ne $i 0}}onClick="removeTemplate('sms-template-{{$i}}');"{{end}}>Delete template</button>
+    </div>
+    {{end}}
+    <span id="templates-end"></span>
+
+    <div id="sms-preview">
+      <p>
+        Below is a preview of how your message could appear on mobile devices.
+        Please note that many mobile carriers do not guarantee that messages are
+        delivered in the order in which they are sent. You should take special
+        care to ensure that no links occur across a message boundary.
+      </p>
+
+      <div id="message-bubbles" class="offset-sm-0 col-sm-12 offset-md-2 col-md-8 offset-lg-3 col-lg-6"></div>
+    </div>
+
+    <small class="form-text text-muted">
+      The SMS message will be constructed based on the template you provide. The overall
+      length of of the SMS message should not exceed 160 characters, or your message will need to be split
+      in transit and may not be joined correctly. There are some special strings that you can use
+      to substitute items.<br/>
+
+      If your message exceeds 160 characters, it will be broken up into
+      individual messages of 153 characters and reconstructed at the mobile device.  The user may be
+      charged for each individual message. The overall maximum length of an SMS Template is {{.maxSMSTemplate}}
+      characters before expansion.
+      <br/>
+      {{if $realm.EnableENExpress}}
+        Your SMS template <em>MUST</em> contain <code>[enslink]</code>.
+        <ul>
+          {{if eq "" .enxRedirectDomain}}
+          <li><code>[enslink]</code> Inserts the required EN Express link of: <code>ens://v?r=[region]&c=[longcode]</code></li>
+          {{else}}
+          <li><code>[enslink]</code> Inserts the EN Express link of: <code>https://{{toLower $realm.RegionCode}}.{{.enxRedirectDomain}}/v?c=[longcode]</code>
+            <ul>
+              <li>This domain should be registered as a universal link for both your Android and iOS applications.</li>
+              <li>Contact your server operator to verify the the verification EN Express redirect service is running and configured correctly.</li>
+            </ul>
+          </li>
+          {{end}}
+          <li><code>[longexpires]</code>The number of hours until the long code expires (just the number, no units).</li>
+          <li><code>[code]</code>The 'short' verification code can be optionally included here in the event the link isn't clickable for the user. Typically this is not needed.</li>
+          <li><code>[expires]</code>The number of minutes until the short code expires (just the number, no units). Should be included if <code>[code]</code> is used</li>
+        </ul>
+
+        Here is an example SMS template using EN Express.
+
+        <ul>
+          <li>
+            <p>Custom greeting before the EN Express link and showing expiration.</p>
+            <p>
+              <samp class="text-dark">
+                State of Wonder DOH. Click to share anonymous data for exposure notifications [enslink] (mobile only) Expires in [longexpires] hours
+              </samp>
+            </p>
+          </li>
+          <li>
+            <p>This results in a SMS message that looks like:</p>
+            <p>
+              <samp class="text-dark">
+                {{if eq "" .enxRedirectDomain}}
+                State of Wonder DOH. Click to share anonymous data for exposure notifications ens://v?r={{$realm.RegionCode}}&c=[longcode] (mobile only) Expires in 24 hours
+                {{else}}
+                State of Wonder DOH. Click to share anonymous data for exposure notifications https://{{toLower $realm.RegionCode}}.{{.enxRedirectDomain}}/v?c=[longcode] (mobile only) Expires in 24 hours
+                {{end}}
+              </samp>
+            </p>
+          </li>
+        </ul>
+
+      {{else}}
+      Your SMS template <em>MUST</em> contain either the <code>[code]</code> or
+      <code>[longcode]</code>.
+      <ul>
+        <li><code>[region]</code>The region setting (set on this page).</li>
+        <li><code>[code]</code>The 'short' verification code.</li>
+        <li><code>[expires]</code>The number of minutes until the short code expires (just the number, no units).</li>
+        <li><code>[longcode]</code>The 'long' verification code</li>
+        <li><code>[longexpires]</code>The number of hours until the long code expires (just the number, no units).</li>
+      </ul>
+
+      Here are some example SMS templates. The recommended usage is to include the long code in the SMS, and make
+      it clickable by registering a customer URI handler for your app.
+      <ul>
+        <li>
+          <p>Send short code in SMS (<code>104</code> characters with 8 digit codes and 60 minute expiration):</p>
+          <p>
+            <samp class="text-dark">
+              State of Wonder Dept. of Health, your exposure
+              notifications code is [code] and expires in [expires]
+              minutes.
+            </samp>
+          </p>
+        </li>
+        <li>
+          <p>Send long code with custom URI (<code>152</code> characters with 16 digit codes and 24 hour expiration).
+            Here we assume that <code>verify.mypha.gov</code> is registered as a universal link for both your iOS
+            and Android applications.
+          </p>
+          <p>
+            <samp class="text-dark">
+              You have tested positive for COVID-19. Click here to
+              share anonymous data for exposure notifications
+              https://verify.mypha.gov/v?c=[longcode] (Expires in [longexpires] hours)
+            </samp>
+          </p>
+        </li>
+      </ul>
+      {{end}}
+    </small>
+  </div>
+
+  <div class="mt-4">
+    <input type="submit" id="update-sms" class="btn btn-primary btn-block" value="Update SMS settings" />
+  </div>
+</form>
+
+<script type="text/javascript">
+  //
+  // SMS preview builder
+  //
+  $(function() {
+    function randShortCode(length) {
+      const chars = '0123456789';
+
+      let result = '';
+      for(let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    }
+
+    function randLongCode(length) {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+      let result = '';
+      for(let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    }
+
+    function buildENSLink(longCode) {
+      {{if .enxRedirectDomain}}
+        return 'https://{{toLower $realm.RegionCode}}.{{.enxRedirectDomain}}/v?c='+longCode;
+      {{else}}
+        return 'ens://v?={{$realm.RegionCode}}&c='+longCode;
+      {{end}}
+    }
+
+    const smsLength = 153;
+    const smsSplitter = new RegExp(`.{1,${smsLength}}`, 'gms');
+    const region = '{{$realm.RegionCode}}';
+    const shortCode = randShortCode({{$realm.CodeLength}});
+    const shortExpires = {{$realm.GetCodeDurationMinutes}};
+    const longCode = randLongCode({{$realm.LongCodeLength}});
+    const longExpires = {{$realm.GetLongCodeDurationHours}};
+    const ensLink = buildENSLink(longCode);
+    const $messageBubbles = $('div#message-bubbles');
+    const $messageBubble = $('<div class="alert alert-secondary" role="alert"></div>');
+
+    // spanBoundary returns whether the substr crosses the smsLength boundary in
+    // body. If it would, it returns the index where it would happen, the start
+    // of the substring in index, and the remainder of substr in the next
+    // message.
+    function spansBoundary(body, substr) {
+      let idx = body.indexOf(substr);
+      if (idx < 0) {
+        return [0, 0, 0];
+      }
+
+      let msg = Math.floor(idx / smsLength);
+      let start = idx % smsLength;
+      let end = start + substr.length;
+      let rem = end - smsLength;
+
+      if (rem <= 0) {
+        return [0, 0, 0];
+      }
+
+      return [msg, start, rem];
+    }
+
+    function buildTemplateSplits(target) {
+      if(!target) {
+        return;
+      }
+
+      let val = ($(target).val() || '').trim();
+      val = val.replace(/\[region\]/g, region);
+      val = val.replace(/\[code\]/g, shortCode);
+      val = val.replace(/\[expires\]/g, shortExpires);
+      val = val.replace(/\[longcode\]/g, longCode);
+      val = val.replace(/\[longexpires\]/g, longExpires);
+      val = val.replace(/\[enslink\]/g, ensLink);
+
+      let parts = val.match(smsSplitter);
+      if(!parts) {
+        return;
+      }
+
+      // Build all the bubbles.
+      let bubbles = [];
+      for(let i = 0; i < parts.length; i++) {
+        let msg = $('<div>').text(parts[i]).html();
+        let ensLinkEscaped = $('<div>').text(ensLink).html();
+        msg = msg.replace(ensLinkEscaped, `<span class="text-primary">${ensLinkEscaped}</span>`);
+
+        bubbles.push($messageBubble.clone().html(msg));
+      }
+
+      // Check if any critical information spans a boundary and highlight.
+      let criticals = [shortCode, longCode, ensLink];
+      let anyCriticalsBreak = false;
+      for(let i = 0; i < criticals.length; i++) {
+        let field = criticals[i];
+
+        let [msg, start, rem] = spansBoundary(val, field)
+        if (rem === 0) {
+          continue;
+        }
+
+        anyCriticalsBreak = true;
+
+        let $thisBubble = $(bubbles[msg]);
+        let thisText = $thisBubble.text();
+        let thisSub = $('<div>').text(thisText.substring(start)).html();
+
+        let $nextBubble = $(bubbles[msg+1]);
+        let nextText = $nextBubble.text();
+        let nextSub = $('<div>').text(nextText.substring(0, rem)).html();
+
+        $thisBubble.html(thisText.replace(thisSub, `<span class="text-danger">${thisSub}</span>`));
+        $nextBubble.html(nextText.replace(nextSub, `<span class="text-danger">${nextSub}</span>`));
+      }
+
+      if (anyCriticalsBreak) {
+        bubbles.unshift($(`<div class="alert alert-danger">` +
+          `Critical information such as links or codes could be split across ` +
+          `an SMS boundary! These instances are highlighted in <span class="text-danger">red</span> ` +
+          `below.</div>`));
+      }
+
+      $messageBubbles.empty();
+      $messageBubbles.append(bubbles);
+    }
+
+    // When the textarea changes, rebuild the splits.
+    const $templates = $('textarea.sms-text-template');
+    $(document).on('keyup', $templates, function(e) {
+      buildTemplateSplits(e.target);
+    });
+
+    // On initial page load, build the split.
+    buildTemplateSplits($templates[0]);
+
+    //
+    // SMS templates builder
+    //
+    let $SMSDropdownTitle = $('#sms-template-dropdown-title');
+    let $SMSDropdownMenu = $('#sms-template-menu');
+    let $divider = $('#sms-template-dropdown-divider');
+    let $end = $('#templates-end');
+    let $defaultTemplate = $('#sms-template-0');
+    let $defaultTemplateDiv = $('#sms-template-0-div');
+    let $lastActive = $defaultTemplate;
+
+    $SMSDropdownMenu.children('a').each(
+      function(i) {
+        $(this).on('click', event => selectSMSTemplate($(this), event));
+      }
+    );
+
+    function removeTemplate(name) {
+      $('#sms-template-0').trigger("click");
+      $('#'+name).remove();
+      $('#'+name+'-div').remove();
+    }
+
+    function selectSMSTemplate($elem, event) {
+      event.preventDefault();
+
+      if ($lastActive == $elem) {
+        return;
+      }
+      if ($elem.attr('id') == "sms-template-new") {
+        $elem = newTemplate();
+      }
+
+      $elem.addClass('active');
+      $lastActive.removeClass('active');
+      $SMSDropdownTitle.text($elem.text());
+      $('#'+$lastActive.attr('id')+'-div').addClass('d-none');
+      $('#'+$elem.attr('id')+'-div').removeClass('d-none');
+      $lastActive = $elem;
+
+      $textarea = $('#'+$elem.attr('id')+'-div').find('textarea.sms-text-template');
+      buildTemplateSplits($textarea);
+    }
+
+    function newTemplate() {
+      let next = $SMSDropdownMenu.children().length - 2;
+      let $newTemplate = $defaultTemplate.clone();
+      $newTemplate.attr('id',`sms-template-${next}`);
+      $newTemplate.text(`SMS template ${next}`);
+      $newTemplate.on('click', event => selectSMSTemplate($newTemplate, event));
+      $newTemplate.insertBefore($divider);
+
+
+      let $newNode = $defaultTemplateDiv.clone();
+      $newNode.attr('id', `sms-template-${next}-div`);
+
+      let $label = $newNode.find('input');
+      $label.attr('readonly', false);
+      $label.attr('name', `sms_text_label_${next}`);
+      $label.val($newTemplate.text());
+      $label.on("change keyup paste", () => {
+        $$newTemplate.text($label.val());
+        $SMSDropdownTitle.text($label.val());
+      });
+
+      let $textArea = $newNode.find('textarea');
+      $textArea.attr('name', `sms_text_template_${next}`);
+      $textArea.val('Your Exposure Notifications verification link: [enslink] Expires in [longexpires] hours (click for mobile device only)');
+
+      let $deleteButton = $newNode.find('button');
+      $deleteButton.click(() => removeTemplate(`sms-template-${next}`));
+      $deleteButton.removeClass('d-none');
+
+      $newNode.insertBefore($end);
+      return $newTemplate;
+    }
+  });
+</script>
+
+{{end}}

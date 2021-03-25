@@ -1,0 +1,79 @@
+{{define "admin/email/show"}}
+
+{{$emailConfig := .emailConfig}}
+
+<!doctype html>
+<html lang="en">
+<head>
+  {{template "head" .}}
+</head>
+
+<body id="admin-email-show" class="tab-content">
+  {{template "admin/navbar" .}}
+
+  <main role="main" class="container">
+    {{template "flash" .}}
+
+    <h1>System email config</h1>
+    <p>
+      Use the form below to create or edit a system email configuration. After
+      creation, you can grant realms the ability to use this config without them
+      seeing the credentials.
+    </p>
+
+    <div class="card mb-3 shadow-sm">
+      <div class="card-header">System email config</div>
+      <div class="card-body">
+        <form method="POST" action="/admin/email" id="email-form">
+          {{ .csrfField }}
+
+          <div id="smtp-form">
+            <div class="form-label-group">
+              <input type="text" name="smtp_account" id="smtp-account" class="form-control text-monospace{{if $emailConfig.ErrorsFor "smtpAccount"}} is-invalid{{end}}"
+                placeholder="SMTP account" {{if $emailConfig.SMTPAccount}}value="{{$emailConfig.SMTPAccount}}"{{end}} />
+              <label for="smtp-account">SMTP account</label>
+              {{template "errorable" $emailConfig.ErrorsFor "smtpAccount"}}
+              <small class="form-text text-muted">
+                This is the SMTP email account eg. noreply@example.com
+              </small>
+            </div>
+
+            <div class="form-label-group">
+              <input type="password" name="smtp_password" id="smtp-password" class="form-control text-monospace{{if $emailConfig.ErrorsFor "smtpPassword"}} is-invalid{{end}}" autocomplete="new-password"
+                placeholder="SMTP password" {{if $emailConfig.SMTPPassword}}value="{{passwordSentinel}}"{{end}}>
+              <label for="smtp-password">SMTP password</label>
+              {{template "errorable" $emailConfig.ErrorsFor "smtpPassword"}}
+              <small class="form-text text-muted">
+                This is the password for your SMTP email.
+              </small>
+            </div>
+
+            <div class="form-label-group">
+              <input name="smtp_host" id="smtp-host" class="form-control text-monospace{{if $emailConfig.ErrorsFor "smtpPort"}} is-invalid{{end}}"
+                placeholder="SMTP host"{{if $emailConfig.SMTPHost}} value="{{$emailConfig.SMTPHost}}"{{end}} />
+              <label for="smtp-port">SMTP host</label>
+              {{template "errorable" $emailConfig.ErrorsFor "smtpHost"}}
+              <small class="form-text text-muted">
+                SMTP host is the hostname for the SMTP server.
+              </small>
+            </div>
+
+            <div class="form-label-group">
+              <input name="smtp_port" id="smtp-port" class="form-control text-monospace{{if $emailConfig.ErrorsFor "smtpPort"}} is-invalid{{end}}"
+                placeholder="SMTP port" value="{{if $emailConfig.SMTPPort}}{{$emailConfig.SMTPPort}}{{else}}587{{end}}" />
+              <label for="smtp-port">SMTP port</label>
+              {{template "errorable" $emailConfig.ErrorsFor "smtpPort"}}
+              <small class="form-text text-muted">
+                SMTP port is the port number to connect to.
+                587 is the default port for SMTP, and legacy port 25 is blocked.
+              </small>
+            </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Update system email config</button>
+        </form>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
+{{end}}

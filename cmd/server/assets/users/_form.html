@@ -1,0 +1,179 @@
+{{define "users/_form"}}
+
+{{$currentMembership := .currentMembership}}
+
+{{$user := .user}}
+{{$userMembership := .userMembership}}
+{{$permissions := .permissions}}
+
+{{$currentMembership := .currentMembership}}
+
+{{if $user.ID}}
+<form method="POST" id="user-form" action="/realm/users/{{$user.ID}}">
+  <input type="hidden" name="_method" value="PATCH">
+  {{else}}
+  <form method="POST" action="/realm/users">
+    {{end}}
+
+    {{ .csrfField }}
+
+    <div class="form-label-group">
+      <input type="text" id="name" name="name" class="form-control{{if $user.ErrorsFor "name"}} is-invalid{{end}}"
+        value="{{$user.Name}}" placeholder="Name" autofocus />
+      <label for="name">Name</label>
+      {{template "errorable" $user.ErrorsFor "name"}}
+    </div>
+
+    <div class="form-label-group">
+      <input type="email" id="email" name="email" class="form-control{{if $user.ErrorsFor "email"}} is-invalid{{end}}"
+        value="{{$user.Email}}" placeholder="Email address" {{disabledIf (ne $user.ID 0)}} />
+      <label for="email">Email address</label>
+      {{template "errorable" $user.ErrorsFor "email"}}
+    </div>
+
+    <hr />
+
+    <div class="d-flex justify-content-between">
+      <h6>Permissions</h6>
+      <small>
+        <a href="#" data-toggle="modal" data-target="#permissions-help">Learn more</a>
+      </small>
+    </div>
+
+    <div class="modal fade" id="permissions-help" data-backdrop="static" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">About permissions</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body mb-n3">
+            <p>
+              Permissions are fine-grained controls that determine what actions
+              a user can take in the system. There is a detailed description
+              under each permission which describes the set of accesses that
+              permission grants.
+            </p>
+
+            <p>
+              Some permissions automatically imply other permissions. For
+              example, the <code>UserWrite</code> permission implies the
+              <code>UserRead</code> permission. In general, you cannot grant
+              permission to write to a resource without also granting permission
+              to read it.
+            </p>
+
+            <p>
+              Finally, you can only grant a permission if you also have that
+              permission on your account. You can remove permissions that you do
+              not have, but you will not be able to add them back.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="permissions-list" class="mb-3">
+      {{if (eq $currentMembership.UserID $userMembership.UserID)}}
+        <small class="form-text mb-3">
+          You cannot edit your own permissions.
+        </small>
+      {{else}}
+        <span id="permission-implied-warning" class="oi oi-warning small py-1 px-1 d-none" aria-hidden="true"
+          data-toggle="tooltip" data-placement="top" data-offset="75"></span>
+
+        {{range $name, $permission := $permissions}}
+          <div class="custom-control custom-checkbox py-2">
+            <input type="checkbox" name="permissions" id="permission-{{$permission.String}}"
+              class="custom-control-input" value="{{$permission.Value}}"
+              data-permission-name="{{$permission.String}}"
+              data-implied-permissions="{{joinStrings $permission.Implied ","}}"
+              {{checkedIf ($userMembership.Can $permission)}}
+              {{disabledIf ($currentMembership.Cannot $permission)}}
+              {{readonlyIf ($currentMembership.Cannot $permission)}}
+              >
+            <label class="custom-control-label w-100" id="permission-{{$permission.String}}-label"
+              for="permission-{{$permission.String}}">
+              {{$name}}
+              {{if $currentMembership.Cannot $permission}}
+                <span class="oi oi-circle-x small py-1 px-1" aria-hidden="true"
+                  data-toggle="tooltip" data-placement="top" data-offset="75" title="You lack this permission"></span>
+              {{end}}
+              <small class="form-text text-muted">
+                Can {{$permission.Description}}.
+                {{if $implied := $permission.Implied}}
+                  Granting this permission will also grant {{toSentence $implied "and"}}.
+                {{end}}
+              </small>
+            </label>
+          </div>
+        {{end}}
+      </div>
+    {{end}}
+
+    <button type="submit" class="btn btn-primary btn-block">
+      {{if $user.ID}}
+        Update user
+      {{else}}
+        Create user
+      {{end}}
+    </button>
+  </form>
+
+  <script type="text/javascript">
+    $(function() {
+      let $permissionImpliedWarning = $('#permission-implied-warning');
+
+      $('input[name=permissions]')
+        .each(toggleState)
+        .change(toggleState);
+
+      function toggleState() {
+        let $this = $(this);
+
+        // Do nothing if disabled
+        if($this.prop('disabled')) {
+          return;
+        }
+
+        let permissionName = $this.data('permissionName');
+        let impliedPermissions = ($this.data('impliedPermissions') || '').split(',');
+
+        let impliedPermissionsList = [];
+        for(i = 0; i < impliedPermissions.length; i++) {
+          let permission = impliedPermissions[i].trim();
+          if(permission) {
+            impliedPermissionsList.push(permission);
+          }
+        }
+
+        let inputs = impliedPermissionsList.map(function(permission) {
+          return `input[data-permission-name="${permission}"]`;
+        }).join(',');
+        let labels = impliedPermissionsList.map(function(permission) {
+          return `label#permission-${permission}-label`;
+        }).join(',');
+
+        if($this.prop('checked')) {
+          $(inputs)
+            .prop('checked', true)
+            .prop('disabled', true);
+
+          let $warning = $permissionImpliedWarning.clone()
+            .removeClass('d-none')
+            .attr('title', `Implied by ${permissionName}`)
+            .tooltip();
+
+          $(labels).find('small.form-text').before($warning);
+        } else {
+          $(inputs)
+            .prop('disabled', false)
+
+          $(labels).find('span.oi').remove();
+        }
+      }
+    });
+  </script>
+{{end}}

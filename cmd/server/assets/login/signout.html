@@ -1,0 +1,33 @@
+{{define "signout"}}
+<!doctype html>
+<html lang="en">
+
+<head>
+  {{template "head" .}}
+
+  {{template "firebase" .}}
+</head>
+
+<body>
+  {{template "navbar" .}}
+
+  <main role="main" class="container">
+    <div id="auth-container">
+      <p id="signout">Signing out...</p>
+    </div>
+  </main>
+
+  <script type="text/javascript">
+    window.addEventListener('load', function() {
+      firebase.auth().signOut().then(function() {
+        $('#signout').text("Redirecting to login...")
+        window.location.assign("/");
+      }).catch(function(error) {
+        flash.error('Error signing out, close browser window.');
+      });
+    });
+  </script>
+</body>
+
+</html>
+{{end}}

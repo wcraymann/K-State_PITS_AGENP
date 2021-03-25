@@ -1,0 +1,492 @@
+{{define "codes/issue"}}
+
+{{$currentMembership := .currentMembership}}
+{{$currentRealm := $currentMembership.Realm}}
+{{$hasSMSConfig := .hasSMSConfig}}
+
+<!doctype html>
+<html lang="en">
+<head>
+  {{template "head" .}}
+
+  <style>
+    .d-code {
+      flex-shrink: 10;
+      font-size: 1.5em;
+      line-height: 2.3em;
+      max-width: 480px;
+    }
+
+    .d-code span {
+      flex: 1;
+      margin: 0 0.1em;
+    }
+  </style>
+</head>
+
+<body id="codes-issue" class="tab-content">
+  {{template "navbar" .}}
+
+  <main role="main" class="container">
+    {{template "flash" .}}
+
+    {{if .welcomeMessage}}
+      <div class="alert alert-secondary" role="alert">
+        <div class="mb-n3">{{.welcomeMessage}}</div>
+      </div>
+    {{end}}
+
+    <h1>{{t $.locale "codes.issue.header"}}</h1>
+    <p>
+      {{t $.locale "codes.issue.instructions"}}
+    </p>
+
+    {{/* Calculate the column width based on the number of expected choices */}}
+    {{$colWidth := 12}}
+    {{if $currentRealm.ValidTestType "negative"}}
+      {{$colWidth = 4}}
+    {{else if $currentRealm.ValidTestType "likely" }}
+      {{$colWidth = 6}}
+    {{end}}
+
+    <form id="issue" action="#">
+      <div id="form-area">
+        <div class="card mb-3 shadow-sm">
+          <div class="card-header">{{t $.locale "codes.issue.diagnosis-header"}}</div>
+          <div class="card-body">
+            <div class="form-row">
+              {{if $currentRealm.ValidTestType "confirmed"}}
+              <div class="form-group col-md-{{$colWidth}}">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="testType" id="testType1" value="confirmed" checked />
+                  <label class="form-check-label" for="testType1">
+                    {{t $.locale "codes.issue.confirmed-test"}}
+                    <small class="form-text text-muted">
+                      {{t $.locale "codes.issue.confirmed-test-details"}}
+                    </small>
+                  </label>
+                </div>
+              </div>
+              {{end}}
+
+              {{if $currentRealm.ValidTestType "likely"}}
+              <div class="form-group col-md-{{$colWidth}}">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="testType" id="testType2" value="likely" />
+                  <label class="form-check-label" for="testType2">
+                    {{t $.locale "codes.issue.likely-test"}}
+                    <small class="form-text text-muted">
+                      {{t $.locale "codes.issue.likely-test-details"}}
+                    </small>
+                  </label>
+                </div>
+              </div>
+              {{end}}
+
+              {{if $currentRealm.ValidTestType "negative"}}
+              <div class="form-group col-md-{{$colWidth}}">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="testType" id="testType3" value="negative" />
+                  <label class="form-check-label" for="testType3">
+                    {{t $.locale "codes.issue.negative-test"}}
+                    <small class="form-text text-muted">
+                      {{t $.locale "codes.issue.negative-test-details"}}
+                    </small>
+                  </label>
+                </div>
+              </div>
+              {{end}}
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-3 shadow-sm">
+          <div class="card-header">{{t $.locale "codes.issue.dates-header"}}</div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="testDate">{{t $.locale "codes.issue.testing-date-label"}}</label>
+                <input type="date" id="test-date" name="testDate" min="{{.minDate}}" max="{{.maxDate}}" class="form-control" {{if $currentRealm.RequireDate}}required{{end}} />
+              </div>
+
+              <div class="form-group col-md-6">
+                <label for="symptomDate">{{t $.locale "codes.issue.symptoms-date-label"}}</label>
+                <div class="input-group">
+                  <input type="date" id="symptom-date" name="symptomDate" min="{{.minDate}}" max="{{.maxDate}}" class="form-control" {{if $currentRealm.RequireDate}}required{{end}} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {{ if $hasSMSConfig }}
+        <div class="card mb-3 shadow-sm">
+          <div class="card-header">{{t $.locale "codes.issue.sms-text-message-header"}}</div>
+          <div class="card-body">
+            {{if $currentRealm.SMSTextAlternateTemplates}}
+            <div class="row form-group">
+              <label for="sms-template" class="col-sm-6 col-md-4 col-lg-3">{{t $.locale "codes.issue.sms-template-label"}}</label>
+              <div class="col-sm-6 col-md-8 col-lg-9">
+                <div class="input-group">
+                  <select class="form-control" id="sms-template">
+                    <option value="Default SMS template">Default SMS template</option>
+                    {{range $k, $v := $currentRealm.SMSTextAlternateTemplates}}
+                    <option value="{{$k}}" {{selectedIf (eq $k $currentMembership.DefaultSMSTemplateLabel)}}>{{$k}}</option>
+                    {{end}}
+                  </select>
+                </div>
+                <small class="form-text text-muted">
+                  {{t $.locale "codes.issue.sms-template-detail"}}
+                </small>
+              </div>
+            </div>
+            {{end}}
+            <div class="row form-group">
+              <label for="phone" class="col-sm-6 col-md-4 col-lg-3">{{t $.locale "codes.issue.sms-text-message-label"}}</label>
+              <div class="col-sm-6 col-md-8 col-lg-9">
+                <div class="input-group">
+                  <input type="tel" id="phone" name="phone" class="form-control" autocomplete="off" class="w-100" />
+                </div>
+                <small class="form-text text-muted">
+                  {{t $.locale "codes.issue.sms-text-message-detail"}}
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+        {{ end }}
+
+        <div class="row mb-3">
+          <div class="col">
+            <button id="submit" type="submit" class="btn btn-primary btn-block">{{t $.locale "codes.issue.create-code-button"}}</button>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <div id="long-code-confirm" class="card d-none mb-3 shadow-sm">
+      <div class="card-header">
+        {{t $.locale "codes.issue.sms-verification-link-header"}}
+        <span id="long-code-expires-at" class="sm float-right text-danger"
+          data-countdown-prefix="{{t $.locale "codes.issue.countdown-expires-in"}}"
+          data-countdown-expired="{{t $.locale "codes.issue.countdown-expired"}}"></span>
+      </div>
+      <div class="card-body">
+        <div class="d-flex">
+          <span class="oi oi-circle-check text-success mr-2 mt-1" aria-hidden="true"></span>
+          <span>
+            {{t $.locale "codes.issue.sms-verification-detail" "<strong id=\"long-code-phone\"></strong>" | safeHTML}}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div id="backup-code-confirm" class="card d-none mb-3 shadow-sm">
+      <div class="card-header">
+        {{t $.locale "codes.issue.backup-short-code-header"}}
+        <span id="backup-code-expires-at" class="sm float-right text-danger"
+          data-countdown-prefix="{{t $.locale "codes.issue.countdown-expires-in"}}"
+          data-countdown-expired="{{t $.locale "codes.issue.countdown-expired"}}"></span>
+      </div>
+      <div class="card-body">
+        <div class="d-flex">
+          <span class="oi oi-warning text-warning mr-2 mt-1" aria-hidden="true"></span>
+          <span>
+            {{t $.locale "codes.issue.backup-short-code-detail"}}
+          </span>
+        </div>
+
+        <div id="backup-code" class="d-code text-center user-select-none text-monospace font-weight-normal d-flex flex-row align-content-center justify-content-around flex-nowrap mx-auto mt-3 mb-2"></div>
+      </div>
+    </div>
+
+    <div id="short-code-confirm" class="card d-none mb-3 shadow-sm">
+      <div class="card-header">
+        {{t $.locale "codes.issue.generated-short-code-header"}}
+        <span id="short-code-expires-at" class="sm float-right text-danger"
+          data-countdown-prefix="{{t $.locale "codes.issue.countdown-expires-in"}}"
+          data-countdown-expired="{{t $.locale "codes.issue.countdown-expired"}}"></span>
+      </div>
+      <div class="card-body">
+        <div class="d-flex">
+          <span class="oi oi-circle-check text-success mr-2 mt-1" aria-hidden="true"></span>
+          <span>
+            {{t $.locale "codes.issue.generated-short-code-detail"}}
+          </span>
+        </div>
+
+        <div id="short-code" class="d-code text-center user-select-none text-monospace font-weight-normal d-flex flex-row align-content-center justify-content-around flex-nowrap mx-auto mt-3 mb-2"></div>
+      </div>
+    </div>
+
+    <div id="uuid-confirm" class="card d-none mb-3 shadow-sm">
+      <div class="card-header">
+        {{t $.locale "codes.issue.uuid-header"}}
+      </div>
+      <div class="card-body">
+        <p>
+          <span class="oi oi-info text-info pr-1" aria-hidden="true"></span>
+          {{t $.locale "codes.issue.uuid-detail"}}
+        </p>
+
+        <div class="form-group row">
+          <div class="input-group col-sm-8 offset-sm-2">
+            <input type="text" id="uuid" class="form-control text-monospace">
+            {{template "clippy" "uuid"}}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col">
+        <button id="reset" class="d-none btn btn-secondary btn-block">{{t $.locale "codes.issue.reset-code-button"}}</button>
+      </div>
+    </div>
+  </main>
+
+  <script type="text/javascript">
+    let $form;
+      let $inputTestDate;
+      let $inputSymptomDate;
+      let $inputSMSTemplate;
+      let $inputPhone;
+      let $buttonSubmit;
+      let $buttonReset;
+
+    let $formArea;
+
+    let $longCodeConfirm;
+      let $longCodeExpiresAt;
+      let $longCodePhone;
+    let $shortCodeConfirm;
+      let $shortCodeExpiresAt;
+      let $shortCode;
+    let $uuidConfirm;
+      let $uuid;
+
+    let codeCountdown;
+    let longCodeCountdown;
+
+    $(function() {
+      $form = $('form#issue');
+        $inputTestDate = $('input#test-date');
+        $inputSymptomDate = $('input#symptom-date');
+        $inputSMSTemplate = $('select#sms-template');
+        $inputPhone = $('input#phone');
+        $buttonSubmit = $('button#submit');
+        $buttonReset = $('button#reset');
+
+      $formArea = $('#form-area')
+
+      $longCodeConfirm = $('#long-code-confirm');
+        $longCodeExpiresAt = $('#long-code-expires-at');
+        $longCodePhone = $('#long-code-phone');
+      $backupCodeConfirm = $('#backup-code-confirm');
+        $backupCodeExpiresAt = $('#backup-code-expires-at');
+        $backupCode = $('#backup-code');
+      $shortCodeConfirm = $('#short-code-confirm');
+        $shortCodeExpiresAt = $('#short-code-expires-at');
+        $shortCode = $('#short-code');
+      $uuidConfirm = $('#uuid-confirm');
+        $uuid = $('#uuid');
+
+      {{if $hasSMSConfig}}
+      // Initialize pretty phone
+      let phone = document.querySelector('#phone');
+      let iti = window.intlTelInput(phone, {
+        nationalMode: true,
+        {{- if $currentRealm.SMSCountry }}
+        initialCountry: '{{$currentRealm.SMSCountry}}',
+        {{- end }}
+        utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.0/js/utils.js',
+      });
+      {{end}}
+
+      // Handle form submission
+      $form.on('submit', function(e) {
+        e.preventDefault();
+
+        // Disable the submit button so we only issue one code
+        $buttonSubmit.prop('disabled', true);
+
+        // Clear and hide errors
+        flash.clear();
+
+        let data = {
+          // Request is padded with 5-15 random chars. These are ignored but vary the size of the request
+          // to prevent network traffic observation.
+          'padding': btoa(genRandomString(5  + Math.floor(Math.random() * 15))),
+        };
+        $($form.serializeArray()).each(function(i, obj) {
+          data[obj.name] = obj.value
+        });
+        data.tzOffset = new Date().getTimezoneOffset();
+
+        {{if $hasSMSConfig}}
+        data['smsTemplateLabel'] = $inputSMSTemplate.val();
+        data['phone'] = iti.getNumber();
+        {{end}}
+
+        getCode(data);
+      });
+
+      // Handle reset
+      $buttonReset.on('click', function(e) {
+        e.preventDefault();
+
+        // Stop countdown timers
+        clearInterval(codeCountdown);
+        clearInterval(longCodeCountdown);
+
+        // Clear and hide errors
+        flash.clear();
+
+        // Clear form values
+        $inputTestDate.val('');
+        $inputSymptomDate.val('');
+        $inputPhone.val('');
+
+        // Long
+        $longCodeConfirm.addClass('d-none');
+        $longCodeExpiresAt.empty();
+        $longCodePhone.empty();
+
+        // Backup
+        $backupCodeConfirm.addClass('d-none');
+        $backupCodeExpiresAt.empty();
+        $backupCode.empty();
+
+        // Short
+        $shortCodeConfirm.addClass('d-none');
+        $shortCodeExpiresAt.empty();
+        $shortCode.empty();
+
+        // UUID
+        $uuidConfirm.addClass('d-none');
+        $uuid.empty();
+
+        // Buttons
+        $buttonSubmit.prop('disabled', false);
+        $buttonReset.addClass('d-none');
+
+        // Show form
+        $formArea.removeClass('d-none');
+      });
+
+      {{if $currentRealm.RequireDate}}
+      let $dates = $('input#test-date,input#symptom-date');
+      $dates.on('input', function() {
+        $dates.not(this).prop('required', !$(this).val().length);
+      });
+      {{end}}
+    });
+
+    function getCode(data) {
+      $.ajax({
+        url: '/codes/issue',
+        type: 'POST',
+        dataType: 'json',
+        cache: false,
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        headers: {
+          'X-CSRF-Token': '{{.csrfToken}}',
+        },
+        success: function(result) {
+          if(result.error && result.error != "") {
+            showError(result.error);
+          } else {
+            // Hide the main form
+            $formArea.addClass('d-none');
+
+            // Show reset button
+            $buttonReset.removeClass('d-none');
+
+            let $targetCodeConfirm;
+            let $targetCodeExpiresAt;
+            let $targetCode;
+
+            // If a phone was provided...
+            if ($longCodePhone && $longCodePhone.length && $inputPhone && $inputPhone.length && $inputPhone.val().length) {
+              // Start countdown
+              longCodeCountdown = countdown($longCodeExpiresAt, result.longExpiresAtTimestamp);
+
+              // Update HTML
+              $longCodePhone.text($inputPhone.val());
+
+              // Show long code
+              $longCodeConfirm.removeClass('d-none');
+
+              // Set targets to backup
+              $targetCodeConfirm = $backupCodeConfirm;
+              $targetCodeExpiresAt = $backupCodeExpiresAt;
+              $targetCode = $backupCode;
+            } else {
+              // Set targets to short
+              $targetCodeConfirm = $shortCodeConfirm;
+              $targetCodeExpiresAt = $shortCodeExpiresAt;
+              $targetCode = $shortCode;
+            }
+
+            // Build the code - this is a collection of HTML spans
+            {
+              // Start countdown
+              codeCountdown = countdown($targetCodeExpiresAt, result.expiresAtTimestamp);
+
+              // Update HTML
+              let code = result.code;
+              for(let i = 0; i < code.length; i++) {
+                let $span = $('<span>').text(code.charAt(i));
+                  $span.addClass('border');
+                  $span.addClass('rounded');
+                  $span.addClass('ml-1');
+                  $span.addClass('py-2');
+                  $span.addClass('bg-light');
+                  $span.text(code.charAt(i));
+                $targetCode.append($span);
+              }
+
+              $targetCodeConfirm.removeClass('d-none');
+            }
+
+            // UUID section
+            {
+              // Fill in the UUID
+              $uuid.val(result.uuid);
+
+              // Show
+              $uuidConfirm.removeClass('d-none');
+            }
+          }
+        },
+        error: function(xhr, resp, text) {
+          // On unauthorized, force a logout
+          if (xhr.status === 401 || xhr.status == 403) {
+            window.location.assign('/signout');
+            return;
+          }
+
+          // Show reset button
+          $buttonReset.removeClass('d-none');
+
+          let message = resp;
+          if (xhr && xhr.responseJSON && xhr.responseJSON.error) {
+            message = message + ": " + xhr.responseJSON.error;
+          }
+          showError(message);
+        }
+      });
+    }
+
+    function showError(error) {
+      flash.clear();
+      flash.error(error);
+
+      // Show reset button
+      $buttonReset.removeClass('d-none');
+    }
+  </script>
+</body>
+</html>
+{{end}}

@@ -1,0 +1,112 @@
+{{define "mobileapps/index"}}
+
+{{$apps := .apps}}
+
+{{$currentMembership := .currentMembership}}
+{{$canWrite := $currentMembership.Can rbac.MobileAppWrite}}
+
+<!doctype html>
+<html lang="en">
+<head>
+  {{template "head" .}}
+</head>
+
+<body id="mobileapps-index" class="tab-content">
+  {{template "navbar" .}}
+
+  <main role="main" class="container">
+    {{template "flash" .}}
+
+    <div class="card shadow-sm mt-4 mb-3">
+      <div class="card-header">
+        <span class="oi oi-phone mr-2 ml-n1" aria-hidden="true"></span>
+        Mobile apps
+        {{if $canWrite}}
+          <a href="/realm/mobile-apps/new" class="float-right mr-n1 text-secondary" data-toggle="tooltip" title="New mobile app">
+            <span class="oi oi-plus small" aria-hidden="true"></span>
+          </a>
+        {{end}}
+      </div>
+
+      <div class="card-body">
+        <form method="GET" action="/realm/mobile-apps" id="search-form">
+          <div class="input-group">
+            <input type="search" name="q" id="search" value="{{.query}}" placeholder="Search..."
+              autocomplete="off" class="form-control" />
+            <div class="input-group-append">
+              <button type="submit" class="btn btn-primary">
+                <span class="oi oi-magnifying-glass" aria-hidden="true"></span>
+                <span class="sr-only">Search</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      {{if $apps}}
+        <table class="table table-bordered table-striped table-fixed table-inner-border-only border-top mb-0">
+          <thead>
+            <tr>
+              <th scope="col" width="40"></th>
+              <th scope="col">Mobile app</th>
+              <th scope="col" width="100">OS</th>
+              {{if $canWrite}}
+                <th scope="col" width="40"></th>
+              {{end}}
+            </tr>
+          </thead>
+          <tbody>
+          {{range $apps}}
+            <tr id="mobileapp-{{.ID}}">
+              <td class="text-center">
+                {{if .DeletedAt}}
+                  <span class="oi oi-circle-x text-danger"
+                    data-toggle="tooltip" title="Mobile app is disabled - it will be deleted in a few days"></span>
+                {{else}}
+                  <span class="oi oi-circle-check text-success"
+                    data-toggle="tooltip" title="Mobile app is enabled"></span>
+                {{end}}
+              </td>
+              <td class="text-truncate">
+                <a href="/realm/mobile-apps/{{.ID}}">{{.Name}}</a>
+              </td>
+              <td>{{.OS.Display}}</td>
+              {{if $canWrite}}
+                <td class="text-center">
+                  {{if .DeletedAt}}
+                  <a href="/realm/mobile-apps/{{.ID}}/enable" id="enable-mobileapp-{{.ID}}"
+                    class="d-block text-danger"
+                    data-method="patch"
+                    data-confirm="Are you sure you want to enable '{{.Name}}'?"
+                    data-toggle="tooltip"
+                    title="Enable this mobile app">
+                    <span class="oi oi-loop-circular" aria-hidden="true"></span>
+                  </a>
+                  {{else}}
+                  <a href="/realm/mobile-apps/{{.ID}}/disable" id="disable-mobileapp-{{.ID}}"
+                    class="d-block text-danger"
+                    data-method="patch"
+                    data-confirm="Are you sure you want to disable '{{.Name}}'?"
+                    data-toggle="tooltip"
+                    title="Disable this mobile app">
+                    <span class="oi oi-trash" aria-hidden="true"></span>
+                  </a>
+                  {{end}}
+                </td>
+              {{end}}
+            </tr>
+          {{end}}
+          </tbody>
+        </table>
+      {{else}}
+        <p class="card-body text-center mb-0">
+          <em>There are no mobile apps{{if .query}} that match the query{{end}}.</em>
+        </p>
+      {{end}}
+    </div>
+
+    {{template "shared/pagination" .}}
+  </main>
+</body>
+</html>
+{{end}}

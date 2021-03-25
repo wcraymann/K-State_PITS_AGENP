@@ -1,0 +1,20 @@
+{{define "firebase"}}
+{{- if .firebase}}
+<script src="https://www.gstatic.com/firebasejs/8.2.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.2.1/firebase-auth.js"></script>
+
+<script type="text/javascript">
+  var firebaseConfig = {
+    apiKey: "{{.firebase.APIKey}}",
+    projectId: "{{.firebase.ProjectID}}",
+    authDomain: "{{.firebase.AuthDomain}}",
+    databaseURL: "https://{{.firebase.DatabaseURL}}",
+    projectId: "{{.firebase.ProjectID}}",
+    storageBucket: "{{.firebase.StorageBucket}}",
+    messagingSenderId: "{{.firebase.MessageSenderID}}",
+    appId: "{{.firebase.AppID}}"
+  };
+  firebase.initializeApp(firebaseConfig);
+</script>
+{{end}}
+{{end}}

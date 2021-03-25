@@ -1,0 +1,210 @@
+{{define "realmadmin/_form_codes"}}
+
+{{$realm := .realm}}
+{{$testTypes := .testTypes}}
+
+<p class="mb-4">
+  These are the settings for verification codes. These values determine how and
+  with what values verification codes can be issued.
+</p>
+
+<form method="POST" action="/realm/settings#codes" class="floating-form">
+  {{ .csrfField }}
+  <input type="hidden" name="codes" value="1" />
+
+  <div class="form-group">
+    <label>Bulk issue codes</label>
+    <div class="form-group">
+      <div class="form-check">
+        <input type="radio" name="allow_bulk" id="allow-bulk-true" class="form-check-input"
+          value="true" {{checkedIf $realm.AllowBulkUpload}} />
+        <label for="allow-bulk-true" class="form-check-label">
+          Allow
+          <small class="form-text text-muted mb-3">
+            Allow users of this realm to bulk issue codes by uploading from a results file.
+          </small>
+        </label>
+      </div>
+
+      <div class="form-check mb-3">
+        <input type="radio" name="allow_bulk" id="allow-bulk-false" class="form-check-input"
+          value="false" {{checkedIf (not $realm.AllowBulkUpload)}} />
+        <label for="allow-bulk-false" class="form-check-label">
+          Disallow
+          <small class="form-text text-muted mb-3">
+            Users are only allowed to issue one code at a time. Upload from a results file is disallowed.
+          </small>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+  <div class="form-group">
+    <label>Allowed test types</label>
+    {{if not $realm.EnableENExpress}}
+      <div class="form-check mb-3">
+        <input type="radio" name="allowed_test_types" id="test-type-negative" class="form-check-input"
+          value="{{$testTypes.negative}}" {{checkedIf (eq $realm.AllowedTestTypes $testTypes.negative)}} />
+        <label for="test-type-negative" class="form-check-label">
+          Positive + Likely + Negative
+          <small class="form-text text-muted">
+            Support confirmed positive tests from an official testing
+            source, clinical diagnoses without a test, and confirmed
+            negative test from an official testing source.
+          </small>
+        </label>
+      </div>
+
+      <div class="form-check mb-3">
+        <input type="radio" name="allowed_test_types" id="test-type-likely" class="form-check-input"
+          value="{{$testTypes.likely}}" {{checkedIf (eq $realm.AllowedTestTypes $testTypes.likely)}} />
+        <label for="test-type-likely" class="form-check-label">
+          Positive + Likely
+          <small class="form-text text-muted">
+            Support confirmed positive tests from an official testing
+            source and clinical diagnoses without a test.
+          </small>
+        </label>
+      </div>
+    {{end}}
+
+    <div class="form-check mb-3">
+      <input type="radio" name="allowed_test_types" id="test-type-confirmed"
+        class="form-check-input" value="{{$testTypes.confirmed}}" {{checkedIf (eq $realm.AllowedTestTypes $testTypes.confirmed)}} />
+      <label for="test-type-confirmed" class="form-check-label">
+        Positive
+        <small class="form-text text-muted">
+          Only permit confirmed positive tests from an official
+          testing source.
+          {{if $realm.EnableENExpress}}
+            <br />
+            You are enrolled in EN Express which only supports the sharing of
+            positive tests.
+          {{end}}
+        </small>
+      </label>
+    </div>
+  </div>
+
+  <hr>
+  <div class="form-group">
+    <label>Date configuration</label>
+    <div class="form-group">
+      <div class="form-check mb-3">
+        <input type="radio" name="require_date" id="require-date-false" class="form-check-input"
+          value="false" {{checkedIf (not $realm.RequireDate)}} />
+        <label for="require-date-false" class="form-check-label">
+          Optional date
+          <small class="form-text text-muted">
+            Do not require a test date when generating a verification
+            code. Users and app can still optionally provide a date.
+          </small>
+        </label>
+      </div>
+
+      <div class="form-check mb-3">
+        <input type="radio" name="require_date" id="require-date-true" class="form-check-input"
+          value="true" {{checkedIf $realm.RequireDate}} />
+        <label for="require-date-true" class="form-check-label">
+          Required date
+          <small class="form-text text-muted">
+            <strong>Recommended:</strong> Require a symptom date or test date
+            when generating a verification code. Attempting to generate a verification
+            code without a date will return an error. <em>Exposure notifications are
+            more accurate when a date is provided.</em>
+          </small>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+  <div class="form-group">
+    <label for="code-length">Short code length</label>
+    {{if $realm.EnableENExpress}}
+      <input type="text" id="code-length" class="form-control{{if $realm.ErrorsFor "codeLength"}} is-invalid{{end}}" value="{{$realm.CodeLength}} digits" readonly />
+    {{else}}
+      <select name="code_length" id="code-length" class="form-control custom-select{{if $realm.ErrorsFor "codeLength"}} is-invalid{{end}}">
+        {{range $cl := .shortCodeLengths}}
+          <option value="{{$cl}}" {{if (eq $cl $realm.CodeLength)}}selected{{end}}>{{$cl}} digits</option>
+        {{end}}
+      </select>
+      <small class="form-text text-muted">
+        The short verification code is intended to be dictated over the phone to the
+        person and is <code>6</code>, <code>7</code>, or <code>8</code> digits in length.
+      </small>
+    {{end}}
+  </div>
+
+  <div class="form-group">
+    <label for="code-duration">Short code expiration</label>
+    {{if $realm.EnableENExpress}}
+      <input type="text" id="code-duration" class="form-control{{if $realm.ErrorsFor "CodeDurationSeconds"}} is-invalid{{end}}" value="{{$realm.GetCodeDurationMinutes}} minutes" readonly />
+      <small class="form-text text-muted">
+        This value cannot be changed when ENExpress is enabled.
+      </small>
+    {{else}}
+      <select name="code_duration" id="code-duration" class="form-control custom-select{{if $realm.ErrorsFor "CodeDurationSeconds"}} is-invalid{{end}}">
+        {{$current := $realm.GetCodeDurationMinutes}}
+        {{range $scm := .shortCodeMinutes}}
+          <option value="{{$scm}}" {{if (eq $scm $current)}}selected{{end}}>{{$scm}} minutes</option>
+        {{end}}
+      </select>
+      <small class="form-text text-muted">
+        The short code can be valid from anywhere between <code>5</code> and <code>60</code>
+        minutes. If you are using SMS deeplinks, it is recommended to keep this duration
+        short and let the long code be valid for a longer period (up to <code>24</code> hours).
+      </small>
+    {{end}}
+  </div>
+
+  <div class="form-group">
+    <label for="long-code-length">Long code length</label>
+    {{if $realm.EnableENExpress}}
+      <input type="text" id="long-code-length" class="form-control{{if $realm.ErrorsFor "longCodeLength"}} is-invalid{{end}}" value="{{$realm.LongCodeLength}} characters" readonly />
+      <small class="form-text text-muted">
+        This value cannot be changed when ENExpress is enabled.
+      </small>
+    {{else}}
+      <select name="long_code_length" id="long-code-length" class="form-control custom-select{{if $realm.ErrorsFor "longCodeLength"}} is-invalid{{end}}">
+        {{range $cl := .longCodeLengths}}
+          <option value="{{$cl}}" {{if (eq $cl $realm.LongCodeLength)}}selected{{end}}>{{$cl}} characters</option>
+        {{end}}
+      </select>
+      <small class="form-text text-muted">
+        The 'long' verification code is only delivered over SMS{{if not $realm.EnableENExpress}}, is more complex with <code>12</code> -
+        <code>16</code> alphanumeric characters, and is never shown to a human. It is recommended
+        to leave this at the default of <code>16</code> digits{{end}}.
+      </small>
+    {{end}}
+  </div>
+
+  <div class="form-group">
+    <label for="long-code-duration">Long code expiration</label>
+    {{if $realm.EnableENExpress}}
+      <input type="text" id="long-code-duration" class="form-control{{if $realm.ErrorsFor "LongCodeDurationSeconds"}} is-invalid{{end}}" value="{{$realm.GetLongCodeDurationHours}} hours" readonly />
+      <small class="form-text text-muted">
+        This value cannot be changed when ENExpress is enabled.
+      </small>
+    {{else}}
+      <select name="long_code_duration" id="long-code-duration" class="form-control custom-select{{if $realm.ErrorsFor "LongCodeDurationSeconds"}} is-invalid{{end}}">
+        {{$current := $realm.GetLongCodeDurationHours}}
+        {{range $lch := .longCodeHours}}
+          <option value="{{$lch}}" {{if (eq $lch $current)}}selected{{end}}>{{$lch}} hours</option>
+        {{end}}
+      </select>
+      <small class="form-text text-muted">
+        The long code can be valid between <code>1</code> and <code>24</code>
+        hours.
+      </small>
+    {{end}}
+  </div>
+
+  <div class="mt-4">
+    <input type="submit" class="btn btn-primary btn-block"
+      value="Update verification codes settings" />
+  </div>
+</form>
+
+{{end}}

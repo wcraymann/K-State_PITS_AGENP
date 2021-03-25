@@ -1,0 +1,92 @@
+{{define "realmadmin/stats"}}
+
+{{$currentMembership := .currentMembership}}
+{{$realm := $currentMembership.Realm}}
+
+<!doctype html>
+<html lang="en">
+<head>
+  {{template "head" .}}
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+
+<body id="realmadmin-stats" class="tab-content">
+  {{template "navbar" .}}
+
+  <main role="main" class="container">
+    {{template "flash" .}}
+
+    <form class="form-inline mb-2 d-flex justify-content-end">
+      <div class="form-group">
+        <label for="smooth-drop">Distribution smoothing</label>
+        <select class="custom-select ml-1" name="smooth-drop" id="smooth-drop"
+        data-toggle="tooltip" title="Distribution graphs will be aggregated as the sum of this many days.">
+          <option value="1">1 day</option>
+          <option value="7" selected>1 week</option>
+          <option value="14">2 weeks</option>
+          <option value="28">4 weeks</option>
+        </select>
+      </div>
+    </form>
+
+    <h1>Realm stats</h1>
+    <p>
+      The data below shows realm statistics and visualizations.
+    </p>
+
+    {{template "realmadmin/_stats_codes" .}}
+
+    <div class="row">
+      <div class="col-lg-6 pr-lg-2">
+        {{template "realmadmin/_stats_users" .}}
+      </div>
+
+      <div class="col-lg-6 pl-lg-2">
+        {{template "realmadmin/_stats_external_issuers" .}}
+      </div>
+    </div>
+
+    {{template "realmadmin/_stats_tokens" .}}
+
+    {{if .hasKeyServerStats}}
+    {{template "realmadmin/_stats_keyserver" .}}
+    {{end}}
+  </main>
+
+  <script type="text/javascript">
+    var chartData = [];
+    let smoothing = 7;
+
+    let $slider = $('#tek_slider');
+    let $onsetSlider = $('#onset_slider');
+    let $issueAgeSlider = $('#issue_age_slider');
+
+    $(() => redrawCharts(chartData, 300));
+
+    $(function() {
+    let $smoothDrop = $('#smooth-drop');
+
+    $smoothDrop.on("change", function(event) {
+      event.preventDefault();
+      smoothing = $smoothDrop.val();
+      $('.sum-title').text(`(${smoothing} day sum)`)
+
+      let max = $slider.attr('max');
+      $slider.attr('min', Math.min(smoothing, max));
+      $slider.val(max);
+      $slider.trigger("input");
+
+      $onsetSlider.attr('min', Math.min(smoothing, max));
+      $onsetSlider.val(max);
+      $onsetSlider.trigger("input");
+
+      max = $issueAgeSlider.attr('max');
+      $issueAgeSlider.attr('min', Math.min(smoothing, max));
+      $issueAgeSlider.val(max);
+      $issueAgeSlider.trigger("input");
+    });
+  });
+  </script>
+</body>
+</html>
+{{end}}
