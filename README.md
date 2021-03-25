@@ -1,3 +1,6 @@
+# DISCLAIMER
+This code is taken from https://github.com/google/exposure-notifications-verification-server/ so it could be analyzed by CodeScene's Xray tool.
+
 # Exposure Notifications Verification Server
 
 This is a reference implementation for an Exposure Notifications [verification server](https://developers.google.com/android/exposure-notifications/verification-system), part of the broader [Google Exposure Notifications system](https://github.com/google/exposure-notifications-server).
